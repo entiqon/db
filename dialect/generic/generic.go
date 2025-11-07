@@ -59,13 +59,25 @@ func New() dialect.SQLDialect {
 			PlaceholderStyle:        "?",
 			AllowMerge:              false,
 			AllowUpsert:             false,
-			ForcedAliasing:          false,
+			ForcedAliasing:          true,
 			EnableReturning:         false,
 			SupportsCTE:             true,
 			SupportsWindowFunctions: true,
 			MaxPlaceholderIndex:     0,
 		},
 	}
+}
+
+// NewWithOptions creates a new SQLDialect instance with the given static options.
+//
+// Unlike New(), this constructor allows specifying a fixed set of dialect.Options
+// at initialization time. Options are immutable: once the dialect is constructed,
+// its behavior (such as ForcedAliasing, quoting rules, etc.) cannot be changed.
+//
+// This is particularly useful for testing different dialect behaviors
+// (e.g., ForcedAliasing = true) without introducing runtime mutation.
+func NewWithOptions(opts dialect.Options) dialect.SQLDialect {
+	return &dialectImpl{opts: opts}
 }
 
 //
