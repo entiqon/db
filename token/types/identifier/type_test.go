@@ -8,113 +8,62 @@ import (
 
 func TestType(t *testing.T) {
 	t.Run("Alias", func(t *testing.T) {
-		cases := []struct {
-			typ  identifier.Type
-			want string
-		}{
-			{identifier.Identifier, "id"},
-			{identifier.Literal, "lt"},
-			{identifier.Function, "fn"},
-			{identifier.Aggregate, "ag"},
-			{identifier.Computed, "cp"},
-			{identifier.Subquery, "sq"},
-			{identifier.Invalid, "ex"},
+		if got := identifier.ParseFrom("").Alias(); got != "" {
+			t.Errorf("Identifier.ParseFrom()=%q, want empty", got)
 		}
 
-		for _, c := range cases {
-			if got := c.typ.Alias(); got != c.want {
-				t.Errorf("Alias(%v) = %q, want %q", c.typ, got, c.want)
-			}
+		if got := identifier.Wildcard.Alias(); got != "wc" {
+			t.Errorf("Wildcard.Alias() = %v, want %v", got, "wc")
 		}
 	})
 
 	t.Run("IsValid", func(t *testing.T) {
-		cases := []struct {
-			typ  identifier.Type
-			want bool
-		}{
-			{identifier.Invalid, false},
-			{identifier.Identifier, true},
-			{identifier.Literal, true},
-			{identifier.Function, true},
-			{identifier.Aggregate, true},
-			{identifier.Computed, true},
-			{identifier.Subquery, true},
-			{identifier.Type(99), false}, // out of range
+		if identifier.ParseFrom("").IsValid() {
+			t.Errorf("expect to be invalid")
 		}
 
-		for _, c := range cases {
-			if got := c.typ.IsValid(); got != c.want {
-				t.Errorf("IsValid(%v) = %v, want %v", c.typ, got, c.want)
-			}
+		if !identifier.Wildcard.IsValid() {
+			t.Errorf("expect to be valid")
+		}
+	})
+
+	t.Run("String", func(t *testing.T) {
+		if got := identifier.ParseFrom("").String(); got != identifier.Invalid.String() {
+			t.Errorf("Identifier.ParseFrom()=%q, want empty", got)
+		}
+
+		if got := identifier.ParseFrom(7).String(); got != identifier.Wildcard.String() {
+			t.Errorf("Identifier.ParseFrom()=%q, want empty", got)
+		}
+
+		if got := identifier.Wildcard.Alias(); got != "wc" {
+			t.Errorf("Wildcard.Alias() = %v, want %v", got, "wc")
 		}
 	})
 
 	t.Run("ParseFrom", func(t *testing.T) {
-		t.Run("FromInt", func(t *testing.T) {
-			if got := identifier.Invalid.ParseFrom(int(identifier.Identifier)); got != identifier.Identifier {
-				t.Errorf("ParseFrom(int Identifier) = %v, want Identifier", got)
-			}
-			if got := identifier.Invalid.ParseFrom(99); got != identifier.Invalid {
-				t.Errorf("ParseFrom(99) = %v, want Invalid", got)
-			}
-		})
-
-		t.Run("FromString", func(t *testing.T) {
-			cases := []struct {
-				in   string
-				want identifier.Type
-			}{
-				{"identifier", identifier.Identifier},
-				{"IDENTIFIER", identifier.Identifier},
-				{"literal", identifier.Literal},
-				{"function", identifier.Function},
-				{"aggregate", identifier.Aggregate},
-				{"computed", identifier.Computed},
-				{"subquery", identifier.Subquery},
-				{"unknown", identifier.Invalid},
-				{"", identifier.Invalid},
-			}
-
-			for _, c := range cases {
-				if got := identifier.Invalid.ParseFrom(c.in); got != c.want {
-					t.Errorf("ParseFrom(%q) = %v, want %v", c.in, got, c.want)
-				}
-			}
-		})
-
-		t.Run("FromType", func(t *testing.T) {
-			if got := identifier.Invalid.ParseFrom(identifier.Computed); got != identifier.Computed {
-				t.Errorf("ParseFrom(Type Computed) = %v, want Computed", got)
-			}
-		})
-
-		t.Run("FromUnsupported", func(t *testing.T) {
-			if got := identifier.Invalid.ParseFrom([]string{"bad"}); got != identifier.Invalid {
-				t.Errorf("ParseFrom([]string) = %v, want Invalid", got)
-			}
-		})
-	})
-
-	t.Run("String", func(t *testing.T) {
-		cases := []struct {
-			typ  identifier.Type
-			want string
-		}{
-			{identifier.Invalid, "Invalid"},
-			{identifier.Identifier, "Identifier"},
-			{identifier.Computed, "Computed"},
-			{identifier.Literal, "Literal"},
-			{identifier.Subquery, "Subquery"},
-			{identifier.Function, "Function"},
-			{identifier.Aggregate, "Aggregate"},
-			{identifier.Type(99), "Unknown"},
+		if identifier.ParseFrom("") != identifier.Invalid {
+			t.Errorf("expect to be invalid")
 		}
 
-		for _, c := range cases {
-			if got := c.typ.String(); got != c.want {
-				t.Errorf("String(%v) = %q, want %q", c.typ, got, c.want)
-			}
+		if got := identifier.ParseFrom([]string{"bad"}); got != identifier.Invalid {
+			t.Errorf("ParseFrom([]string) = %v, want Invalid", got)
+		}
+
+		if identifier.ParseFrom("wc") != identifier.Wildcard {
+			t.Errorf("expect to be wc")
+		}
+
+		if identifier.ParseFrom("wildcard") != identifier.Wildcard {
+			t.Errorf("expect to be wildcard")
+		}
+
+		if identifier.ParseFrom("WILDCARD") != identifier.Wildcard {
+			t.Errorf("expect to be wildcard")
+		}
+
+		if got := identifier.ParseFrom(identifier.Computed); got != identifier.Computed {
+			t.Errorf("ParseFrom(Type Computed) = %v, want Computed", got)
 		}
 	})
 }
