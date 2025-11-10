@@ -9,6 +9,7 @@ import (
 	"github.com/entiqon/common/extension"
 	"github.com/entiqon/db/contract"
 	"github.com/entiqon/db/errors"
+	"github.com/entiqon/db/token/helpers/wildcard"
 	"github.com/entiqon/db/token/types/identifier"
 )
 
@@ -39,73 +40,85 @@ func ResolveExpression(
 	in := strings.TrimSpace(input.(string))
 	kind := ResolveExpressionType(in)
 
+	var expr, alias string
+	var err error
 	switch kind {
-	case identifier.Expression:
+	case identifier.TypeWildcard:
+		expr, err = wildcard.ParseWildcard(in)
+		if err != nil {
+			return kind, "", "", err
+		}
+
+	case identifier.TypeExpression:
 		parts := strings.Fields(in)
 		switch len(parts) {
 		case 1:
-			return identifier.Expression, parts[0], "", nil
+			expr = parts[0]
+
 		case 2:
 			if !allowAlias {
-				return identifier.Invalid, "", "", stdErr.New("alias not allowed: " + in)
+				return kind, "", "", stdErr.New("alias not allowed: " + in)
 			}
-			if !IsValidAlias(parts[1]) {
-				return identifier.Invalid, parts[0], parts[1],
-					stdErr.New("invalid alias: " + parts[1])
-			}
-			return identifier.Expression, parts[0], parts[1], nil
+			expr, alias = parts[0], parts[1]
+
 		case 3:
 			if strings.EqualFold(parts[1], "AS") {
 				if !allowAlias {
-					return identifier.Invalid, "", "", stdErr.New("alias not allowed: " + in)
+					return kind, "", "", stdErr.New("alias not allowed: " + in)
 				}
-				if !IsValidAlias(parts[2]) {
-					return identifier.Invalid, parts[0], parts[2],
-						stdErr.New("invalid alias: " + parts[2])
-				}
-				return identifier.Expression, parts[0], parts[2], nil
 			}
-			return identifier.Invalid, "", "", stdErr.New("invalid identifier: " + in)
+			expr, alias = parts[0], parts[2]
+
 		default:
-			return identifier.Invalid, "", "", stdErr.New("invalid identifier: " + in)
+			return identifier.TypeInvalid, "", "", stdErr.New("invalid identifier: " + in)
 		}
 
-	case identifier.Subquery:
+	case identifier.TypeSubquery:
 		closeIdx := strings.LastIndex(in, ")")
-		expr := strings.TrimSpace(in[:closeIdx+1])
+		expr = strings.TrimSpace(in[:closeIdx+1])
 		rest := strings.TrimSpace(in[closeIdx+1:])
-		alias, err := resolveAlias(rest, in, allowAlias)
+		alias, err = resolveAlias(rest, in, allowAlias)
 		if err != nil {
-			return identifier.Invalid, expr, alias, err
+			return kind, expr, alias, err
 		}
-		return identifier.Subquery, expr, alias, nil
 
-	case identifier.Computed, identifier.Aggregate, identifier.Function:
+	case identifier.TypeComputed, identifier.TypeAggregate, identifier.TypeFunction:
 		closeIdx := strings.LastIndex(in, ")")
-		expr := strings.TrimSpace(in[:closeIdx+1])
+		expr = strings.TrimSpace(in[:closeIdx+1])
 		rest := strings.TrimSpace(in[closeIdx+1:])
-		alias, err := resolveAlias(rest, in, allowAlias)
+		alias, err = resolveAlias(rest, in, allowAlias)
 		if err != nil {
-			return identifier.Invalid, expr, alias, err
+			return kind, expr, alias, err
 		}
-		return kind, expr, alias, nil
 
-	case identifier.Literal:
+	case identifier.TypeLiteral:
 		parts := strings.Fields(in)
-		expr := parts[0]
+		expr = parts[0]
 		rest := ""
 		if len(parts) > 1 {
 			rest = strings.Join(parts[1:], " ")
 		}
-		alias, err := resolveAlias(rest, in, allowAlias)
+		alias, err = resolveAlias(rest, in, allowAlias)
 		if err != nil {
-			return identifier.Invalid, expr, alias, err
+			return kind, expr, alias, err
 		}
-		return identifier.Literal, expr, alias, nil
 
 	default:
-		return identifier.Invalid, "", "", fmt.Errorf("empty identifier is not allowed: %q", in)
+		return identifier.TypeInvalid, "", "", fmt.Errorf("empty identifier is not allowed: %q", in)
 	}
+
+	if kind.IsWildcard() && alias != "" {
+		return kind, expr, "", fmt.Errorf("wilcard cannot be aliased: %q", alias)
+	}
+
+	if err = ValidateIdentifier(expr); err != nil {
+		return kind, "", "", err
+	}
+	if err = ValidateAlias(expr); err != nil {
+		return kind, expr, "", err
+	}
+
+	return kind, expr, alias, nil
 }
 
 // ResolveExpressionType determines the ExpressionKind from a raw expression.
@@ -127,24 +140,28 @@ func ResolveExpression(
 func ResolveExpressionType(expr string) identifier.Type {
 	expr = strings.TrimSpace(expr)
 	if expr == "" {
-		return identifier.Invalid // invalid
+		return identifier.TypeInvalid // invalid
+	}
+
+	if wildcard.IsWildcard(expr) {
+		return identifier.TypeWildcard
 	}
 
 	upper := strings.ToUpper(expr)
 
-	// ✅ Subquery
+	// Subquery
 	// Case 1: Parenthesized SELECT
 	if strings.HasPrefix(expr, "(") && strings.HasPrefix(upper, "(SELECT ") {
-		return identifier.Subquery
+		return identifier.TypeSubquery
 	}
 	// Case 2: Bare SELECT
 	if strings.HasPrefix(upper, "SELECT ") {
-		return identifier.Subquery
+		return identifier.TypeSubquery
 	}
 
 	// Computed
 	if strings.HasPrefix(expr, "(") && strings.Contains(expr, ")") {
-		return identifier.Computed
+		return identifier.TypeComputed
 	}
 
 	// Aggregate
@@ -153,23 +170,23 @@ func ResolveExpressionType(expr string) identifier.Type {
 		strings.HasPrefix(upper, "MAX(") ||
 		strings.HasPrefix(upper, "MIN(") ||
 		strings.HasPrefix(upper, "AVG(") {
-		return identifier.Aggregate
+		return identifier.TypeAggregate
 	}
 
 	// Function
 	if strings.Contains(expr, "(") && strings.Contains(expr, ")") {
-		return identifier.Function
+		return identifier.TypeFunction
 	}
 
 	// Literal → numeric or quoted string
 	if strings.HasPrefix(expr, "'") ||
 		strings.HasPrefix(expr, "\"") ||
 		extension.NumberOr(expr, -1) != -1 {
-		return identifier.Literal
+		return identifier.TypeLiteral
 	}
 
 	// Fallback → treat as plain identifier
-	return identifier.Expression
+	return identifier.TypeExpression
 }
 
 // ValidateIdentifier checks if s is a valid SQL identifier.
@@ -212,27 +229,6 @@ func ValidateType(v any) error {
 		// Everything else → invalid format
 		return fmt.Errorf("invalid format (type %T)", v)
 	}
-}
-
-// ValidateWildcard checks whether a wildcard expression ("*")
-// is used in a valid context.
-//
-// Rules:
-//   - Bare "*" is allowed only without an alias.
-//   - If "*" is aliased or marked as raw, it is invalid.
-//
-// Example:
-//
-//	ValidateWildcard("*", "")       → ok
-//	ValidateWildcard("*", "total")  → error ("* cannot be aliased or raw")
-//
-// Future: dialect packages may extend this to support qualified
-// wildcards (e.g. "table.*") and additional rules.
-func ValidateWildcard(expr, alias string) error {
-	if expr == "*" && alias != "" {
-		return fmt.Errorf("'*' cannot be aliased or raw")
-	}
-	return nil
 }
 
 // resolveAlias parses "expr" (text after the main expression) into an alias.

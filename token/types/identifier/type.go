@@ -16,15 +16,15 @@ import "strings"
 type Type int
 
 const (
-	Unknown Type = iota
-	Invalid
-	Subquery
-	Computed
-	Aggregate
-	Function
-	Literal
-	Expression
-	Wildcard
+	TypeUnknown Type = iota
+	TypeInvalid
+	TypeSubquery
+	TypeComputed
+	TypeAggregate
+	TypeFunction
+	TypeLiteral
+	TypeExpression
+	TypeWildcard
 )
 
 // typeMeta holds metadata for a Type classification.
@@ -46,13 +46,13 @@ type typeMeta struct {
 //
 // Adding a new Type only requires updating this registry.
 var registry = map[Type]typeMeta{
-	Expression: {"Expression", "ex"},
-	Wildcard:   {"Wildcard", "wc"},
-	Literal:    {"Literal", "lt"},
-	Function:   {"Function", "fn"},
-	Aggregate:  {"Aggregate", "ag"},
-	Computed:   {"Computed", "cp"},
-	Subquery:   {"Subquery", "sq"},
+	TypeExpression: {"Expression", "ex"},
+	TypeWildcard:   {"Wildcard", "wc"},
+	TypeLiteral:    {"Literal", "lt"},
+	TypeFunction:   {"Function", "fn"},
+	TypeAggregate:  {"Aggregate", "ag"},
+	TypeComputed:   {"Computed", "cp"},
+	TypeSubquery:   {"Subquery", "sq"},
 }
 
 // Alias returns the short two-letter code used when generating
@@ -67,9 +67,16 @@ func (k Type) Alias() string {
 	return ""
 }
 
+// IsWildcard reports whether the Type corresponds to a wildcard identifier.
+//
+// Wildcards include both unqualified "*" and qualified forms such as "table.*".
+func (k Type) IsWildcard() bool {
+	return k == TypeWildcard
+}
+
 // IsValid reports whether the Type is registered and not Unknown or Invalid.
 func (k Type) IsValid() bool {
-	if k == Invalid || k == Unknown {
+	if k == TypeInvalid || k == TypeUnknown {
 		return false
 	}
 	_, ok := registry[k]
@@ -116,5 +123,5 @@ func ParseFrom(value any) Type {
 			}
 		}
 	}
-	return Invalid
+	return TypeInvalid
 }

@@ -19,17 +19,17 @@ func ExampleParseWildcard() {
 	}
 
 	for _, expr := range cases {
-		ok, err := wildcard.ParseWildcard(expr)
-		if ok {
-			fmt.Printf("%-16q → valid\n", expr)
+		base, err := wildcard.ParseWildcard(expr)
+		if err == nil {
+			fmt.Printf("%-16q → valid (base: %s)\n", expr, base)
 		} else {
 			fmt.Printf("%-16q → invalid: %v\n", expr, err)
 		}
 	}
 
 	// Output:
-	// "*"              → valid
-	// "users.*"        → valid
+	// "*"              → valid (base: *)
+	// "users.*"        → valid (base: users.*)
 	// "* AS alias"     → invalid: wildcard cannot be aliased: "* AS alias"
 	// "users.* alias"  → invalid: wildcard cannot be aliased: "users.* alias"
 	// "qty * price"    → invalid: invalid wildcard syntax: "qty * price"

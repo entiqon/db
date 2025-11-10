@@ -6,25 +6,59 @@ import (
 	"github.com/entiqon/db/token/types/identifier"
 )
 
-// ExampleType demonstrates how to use the identifier.Type enum.
-func ExampleType() {
+func ExampleType_Alias() {
+	t := identifier.TypeWildcard
+	fmt.Println(t.Alias())
+
+	// Output:
+	// wc
+}
+
+func ExampleType_IsValid() {
+	t := identifier.TypeInvalid
+	fmt.Println(t.IsValid())
+
+	t = identifier.TypeUnknown
+	fmt.Println(t.IsValid())
+
+	t = identifier.TypeSubquery
+	fmt.Println(t.IsValid())
+
+	// Output:
+	// false
+	// false
+	// true
+}
+
+func ExampleType_IsWildcard() {
 	var t identifier.Type
+	t = identifier.TypeFunction
+	fmt.Println(t.IsWildcard())
 
-	// Functions render as capitalized names
-	t = identifier.Function
-	fmt.Println(t)
+	t = identifier.TypeWildcard
+	fmt.Println(t.IsWildcard())
 
-	// Subqueries render as capitalized names
-	t = identifier.Subquery
-	fmt.Println(t)
+	// Output:
+	// false
+	// true
+}
 
-	// Invalid or unknown types render as "Invalid" or "Unknown"
-	fmt.Println(identifier.Invalid)
-	fmt.Println(identifier.Type(99))
+func ExampleType_String() {
+	t := identifier.TypeFunction
+	fmt.Println(t.String())
 
 	// Output:
 	// Function
-	// Subquery
+}
+
+func ExampleType_parseFrom() {
+	t := identifier.ParseFrom(123)
+	fmt.Println(t.String())
+
+	t = identifier.ParseFrom(7)
+	fmt.Println(t.String())
+
+	// Output:
 	// Invalid
-	// Invalid
+	// Expression
 }

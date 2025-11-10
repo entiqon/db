@@ -15,17 +15,18 @@
 //
 // # Categories
 //
-//   - Invalid:    could not classify
-//   - Subquery:   "(SELECT ...)"
-//   - Computed:   other parenthesized expressions, e.g. "(a+b)"
-//   - Aggregate:  SUM, COUNT, MAX, MIN, AVG
-//   - Function:   other calls with parentheses, e.g. JSON_EXTRACT(data)
-//   - Literal:    quoted string or numeric constant
-//   - Identifier: plain table or column name (default fallback)
+//   - TypeInvalid:    could not classify
+//   - TypeSubquery:   "(SELECT ...)"
+//   - TypeComputed:   other parenthesized expressions, e.g. "(a+b)"
+//   - TypeAggregate:  SUM, COUNT, MAX, MIN, AVG
+//   - TypeFunction:   other calls with parentheses, e.g. JSON_EXTRACT(data)
+//   - TypeLiteral:    quoted string or numeric constant
+//   - TypeExpression: plain table or column name (default fallback)
+//   - TypeWildcard:   wildcard symbol or qualified form (e.g. table.*)
 //
 // # Philosophy
 //
-//   - Never panic: always return a Type, with Invalid or Unknown
+//   - Never panic: always return a Type, with TypeInvalid or TypeUnknown
 //     as safe fallbacks.
 //   - Auditability: preserve the original classification for
 //     debugging and logs.

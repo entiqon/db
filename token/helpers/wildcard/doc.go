@@ -19,9 +19,9 @@
 //
 // Functions
 //
-//   - ParseWildcard(expr string) (bool, error)
+//   - ParseWildcard(expr string) (string, error)
 //     Performs strict validation of a potential wildcard expression and returns
-//     whether it is valid along with an explanatory error if not.
+//     the normalized base string (e.g., "*", "table.*") or an error if invalid.
 //
 //   - IsWildcard(expr string) bool
 //     Lightweight check that reports true only for syntactically valid, unaliased
@@ -32,9 +32,9 @@
 //
 // Example
 //
-//	ok, err := wildcard.ParseWildcard("users.*")
-//	if ok {
-//	    fmt.Println("Valid wildcard")
+//	base, err := wildcard.ParseWildcard("users.*")
+//	if err == nil {
+//	    fmt.Println("Valid wildcard:", base)
 //	} else {
 //	    fmt.Println("Invalid:", err)
 //	}
