@@ -40,11 +40,11 @@ func ResolveExpression(
 	kind := ResolveExpressionType(in)
 
 	switch kind {
-	case identifier.Identifier:
+	case identifier.Expression:
 		parts := strings.Fields(in)
 		switch len(parts) {
 		case 1:
-			return identifier.Identifier, parts[0], "", nil
+			return identifier.Expression, parts[0], "", nil
 		case 2:
 			if !allowAlias {
 				return identifier.Invalid, "", "", stdErr.New("alias not allowed: " + in)
@@ -53,7 +53,7 @@ func ResolveExpression(
 				return identifier.Invalid, parts[0], parts[1],
 					stdErr.New("invalid alias: " + parts[1])
 			}
-			return identifier.Identifier, parts[0], parts[1], nil
+			return identifier.Expression, parts[0], parts[1], nil
 		case 3:
 			if strings.EqualFold(parts[1], "AS") {
 				if !allowAlias {
@@ -63,7 +63,7 @@ func ResolveExpression(
 					return identifier.Invalid, parts[0], parts[2],
 						stdErr.New("invalid alias: " + parts[2])
 				}
-				return identifier.Identifier, parts[0], parts[2], nil
+				return identifier.Expression, parts[0], parts[2], nil
 			}
 			return identifier.Invalid, "", "", stdErr.New("invalid identifier: " + in)
 		default:
@@ -169,7 +169,7 @@ func ResolveExpressionType(expr string) identifier.Type {
 	}
 
 	// Fallback → treat as plain identifier
-	return identifier.Identifier
+	return identifier.Expression
 }
 
 // ValidateIdentifier checks if s is a valid SQL identifier.

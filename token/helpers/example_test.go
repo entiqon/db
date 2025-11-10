@@ -137,14 +137,14 @@ func ExampleResolveExpressionType() {
 	// Aggregate
 	// Function
 	// Literal
-	// Identifier
+	// Expression
 	// Invalid
 }
 
 // ExampleResolveExpression demonstrates parsing and classifying expressions
 // with optional aliases.
 func ExampleResolveExpression() {
-	// Identifier without alias
+	// Expression without alias
 	kind, expr, alias, err := helpers.ResolveExpression("id", true)
 	fmt.Println(kind, expr, alias, err)
 
@@ -172,7 +172,7 @@ func ExampleResolveExpression() {
 	kind, expr, alias, err = helpers.ResolveExpression("id user_id", false)
 	fmt.Println(kind, expr, alias, err != nil)
 
-	// Identifier without alias
+	// Expression without alias
 	kind, expr, alias, err = helpers.ResolveExpression("(SELECT COUNT(id) FROM users) 123456", true)
 	fmt.Println(kind, expr, alias, err)
 
@@ -183,8 +183,8 @@ func ExampleResolveExpression() {
 	fmt.Println(kind, expr, alias, err)
 
 	// Output:
-	// Identifier id  <nil>
-	// Identifier id user_id <nil>
+	// Expression id  <nil>
+	// Expression id user_id <nil>
 	// Invalid   alias not allowed: id AS user_id
 	// Subquery (SELECT * FROM users) u <nil>
 	// Computed (price * qty) total <nil>

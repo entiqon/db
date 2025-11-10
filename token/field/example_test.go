@@ -201,14 +201,14 @@ func ExampleToken_new() {
 	// Invalid Field("field")   false unsupported type; if you want to create a copy, use Clone() instead
 	// Invalid 123456   false expr has invalid format (type int)
 	// Invalid    false empty identifier is not allowed: ""
-	// Identifier * *  false <nil>
-	// Identifier field field  false <nil>
-	// Identifier field alias field alias true <nil>
-	// Identifier field AS alias field alias true <nil>
-	// Identifier field alias field alias true <nil>
-	// Identifier * alias * alias true '*' cannot be aliased or raw
-	// Identifier field 123456 field  false alias must be a string, got int
-	// Identifier field 123alias field  false invalid alias identifier cannot start with digit: "123alias"
+	// Expression * *  false <nil>
+	// Expression field field  false <nil>
+	// Expression field alias field alias true <nil>
+	// Expression field AS alias field alias true <nil>
+	// Expression field alias field alias true <nil>
+	// Expression * alias * alias true '*' cannot be aliased or raw
+	// Expression field 123456 field  false alias must be a string, got int
+	// Expression field 123alias field  false invalid alias identifier cannot start with digit: "123alias"
 	// Aggregate SUM(price) AS total SUM(price) total true <nil>
 	// Subquery (SELECT id FROM users) user_id (SELECT id FROM users) user_id true <nil>
 	// Literal 'hello' msg 'hello' msg true <nil>

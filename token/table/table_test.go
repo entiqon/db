@@ -44,8 +44,8 @@ func TestTable(t *testing.T) {
 				if tbl.Input() != "table" {
 					t.Errorf("expected table 'name', got %v", tbl.Name())
 				}
-				if tbl.ExpressionKind() != identifier.Identifier {
-					t.Errorf("expected kind=Identifier, got %v", tbl.ExpressionKind())
+				if tbl.ExpressionKind() != identifier.Expression {
+					t.Errorf("expected kind=Expression, got %v", tbl.ExpressionKind())
 				}
 				if tbl.Name() != "table" {
 					t.Errorf("expected table 'name', got %v", tbl.Name())
@@ -125,7 +125,7 @@ func TestTable(t *testing.T) {
 			if src.Input() != "table t" {
 				t.Errorf("expected field, got %v", src.Input())
 			}
-			if src.ExpressionKind().String() != "Identifier" {
+			if src.ExpressionKind() != identifier.Expression {
 				t.Errorf("expected kind Identifier, got %s", src.ExpressionKind().String())
 			}
 			if src.Expr() != "table" {

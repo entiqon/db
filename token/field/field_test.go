@@ -47,13 +47,13 @@ func TestField(t *testing.T) {
 
 				t.Run("Aliased", func(t *testing.T) {
 					f := field.New("field alias")
-					if f.ExpressionKind() != identifier.Identifier || f.Expr() != "field" || f.Alias() != "alias" {
-						t.Errorf("expected id, got %v", f.Expr())
+					if f.ExpressionKind() != identifier.Expression || f.Expr() != "field" || f.Alias() != "alias" {
+						t.Errorf("expected field, got %v", f.Expr())
 					}
 
 					f = field.New("field AS alias")
-					if f.ExpressionKind() != identifier.Identifier || f.Expr() != "field" || f.Alias() != "alias" {
-						t.Errorf("expected id, got %v", f.Expr())
+					if f.ExpressionKind() != identifier.Expression || f.Expr() != "field" || f.Alias() != "alias" {
+						t.Errorf("expected field, got %v", f.Expr())
 					}
 				})
 
@@ -78,7 +78,7 @@ func TestField(t *testing.T) {
 			t.Run("2-args", func(t *testing.T) {
 				t.Run("Default", func(t *testing.T) {
 					f := field.New("field", "alias")
-					if f.ExpressionKind() != identifier.Identifier || f.Expr() != "field" || f.Alias() != "alias" {
+					if f.ExpressionKind() != identifier.Expression || f.Expr() != "field" || f.Alias() != "alias" {
 						t.Errorf("expected id, got %v", f.Expr())
 					}
 				})

@@ -26,5 +26,5 @@ func ExampleType() {
 	// Function
 	// Subquery
 	// Invalid
-	// Unknown
+	// Invalid
 }

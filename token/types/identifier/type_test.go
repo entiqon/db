@@ -32,7 +32,7 @@ func TestType(t *testing.T) {
 			t.Errorf("Identifier.ParseFrom()=%q, want empty", got)
 		}
 
-		if got := identifier.ParseFrom(7).String(); got != identifier.Wildcard.String() {
+		if got := identifier.ParseFrom(8).String(); got != identifier.Wildcard.String() {
 			t.Errorf("Identifier.ParseFrom()=%q, want empty", got)
 		}
 

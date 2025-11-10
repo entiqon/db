@@ -58,7 +58,7 @@ func ExampleBaseToken() {
 	fmt.Println(fmt.Sprintf(
 		"Input=%q, Kind=%q, Expr=%q, Alias=%q, Aliased=%t",
 		bt.Input(), bt.ExpressionKind(), bt.Expr(), bt.Alias(), bt.IsAliased()))
-	// Output: Input="users u", Kind="Identifier", Expr="users", Alias="u", Aliased=true
+	// Output: Input="users u", Kind="Expression", Expr="users", Alias="u", Aliased=true
 }
 
 // ExampleClonable demonstrates using a Table as a Clonable.
