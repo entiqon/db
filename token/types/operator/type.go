@@ -138,6 +138,66 @@ const (
 	//   Operator:  NotIsDistinctFrom
 	//   Output:    "IS NOT DISTINCT FROM"
 	NotIsDistinctFrom
+
+	// ----------------------------------------------------------------------
+	// Arithmetic operators (used in computed expressions and SELECT lists)
+	// ----------------------------------------------------------------------
+
+	// Add represents the addition operator "+".
+	//
+	// Example:
+	//   Expression: "price + tax"
+	//   Operator:   Add
+	//   Output:     "+"
+	Add
+
+	// Subtract represents the subtraction operator "-".
+	//
+	// Example:
+	//   Expression: "qty - discount"
+	//   Operator:   Subtract
+	//   Output:     "-"
+	Subtract
+
+	// Multiply represents the multiplication operator "*".
+	//
+	// Example:
+	//   Expression: "qty * price"
+	//   Operator:   Multiply
+	//   Output:     "*"
+	Multiply
+
+	// Divide represents the division operator "/".
+	//
+	// Example:
+	//   Expression: "total / count"
+	//   Operator:   Divide
+	//   Output:     "/"
+	Divide
+
+	// Modulo represents the modulo (remainder) operator "%".
+	//
+	// Example:
+	//   Expression: "value % 10"
+	//   Operator:   Modulo
+	//   Output:     "%"
+	Modulo
+
+	// Power represents the exponentiation operator "^".
+	//
+	// Example (PostgreSQL):
+	//   Expression: "base ^ exp"
+	//   Operator:   Power
+	//   Output:     "^"
+	Power
+
+	// Concat represents the string concatenation operator "||".
+	//
+	// Example (PostgreSQL, SQLite):
+	//   Expression: "firstname || ' ' || lastname"
+	//   Operator:   Concat
+	//   Output:     "||"
+	Concat
 )
 
 // Meta describes a supported operator: its canonical spelling, alias, and a
@@ -155,12 +215,12 @@ type Meta struct {
 //
 // [IS NOT DISTINCT FROM IS DISTINCT FROM IS NOT NULL NOT LIKE BETWEEN IS NULL NOT IN LIKE IN != >= <= > < =]
 var registry = map[Type]Meta{
-	NotIsDistinctFrom:  {String: "IS NOT DISTINCT FROM", Alias: "notdistinct", Position: 1, Synonyms: []string{"is not distinct from", "notdistinct"}},
-	IsDistinctFrom:     {String: "IS DISTINCT FROM", Alias: "isdistinct", Position: 2, Synonyms: []string{"is distinct from", "isdistinct"}},
-	IsNotNull:          {String: "IS NOT NULL", Alias: "notnull", Position: 3, Synonyms: []string{"is not null", "notnull"}},
-	NotLike:            {String: "NOT LIKE", Alias: "nlike", Position: 4, Synonyms: []string{"not like", "nlike"}},
+	NotIsDistinctFrom:  {String: "IS NOT DISTINCT FROM", Alias: "nd", Position: 1, Synonyms: []string{"is not distinct from", "notdistinct"}},
+	IsDistinctFrom:     {String: "IS DISTINCT FROM", Alias: "isdf", Position: 2, Synonyms: []string{"is distinct from", "isdistinct"}},
+	IsNotNull:          {String: "IS NOT NULL", Alias: "nn", Position: 3, Synonyms: []string{"is not null", "notnull"}},
+	NotLike:            {String: "NOT LIKE", Alias: "nl", Position: 4, Synonyms: []string{"not like", "nlike"}},
 	Between:            {String: "BETWEEN", Alias: "between", Position: 5, Synonyms: []string{"between"}},
-	IsNull:             {String: "IS NULL", Alias: "isnull", Position: 6, Synonyms: []string{"is null", "isnull"}},
+	IsNull:             {String: "IS NULL", Alias: "isn", Position: 6, Synonyms: []string{"is null", "isnull"}},
 	NotIn:              {String: "NOT IN", Alias: "nin", Position: 7, Synonyms: []string{"not in", "nin"}},
 	Like:               {String: "LIKE", Alias: "like", Position: 8, Synonyms: []string{"like"}},
 	In:                 {String: "IN", Alias: "in", Position: 9, Synonyms: []string{"in"}},
@@ -172,12 +232,35 @@ var registry = map[Type]Meta{
 	Equal:              {String: "=", Alias: "eq", Position: 15, Synonyms: []string{"=", "eq"}},
 }
 
+// Arithmetic operators appended for computed expression support.
+var arithmeticRegistry = map[Type]Meta{
+	Add:      {String: "+", Alias: "add", Position: 100, Synonyms: []string{"+"}},
+	Subtract: {String: "-", Alias: "sub", Position: 101, Synonyms: []string{"-"}},
+	Multiply: {String: "*", Alias: "mul", Position: 102, Synonyms: []string{"*"}},
+	Divide:   {String: "/", Alias: "div", Position: 103, Synonyms: []string{"/"}},
+	Modulo:   {String: "%", Alias: "mod", Position: 104, Synonyms: []string{"%"}},
+	Power:    {String: "^", Alias: "pow", Position: 105, Synonyms: []string{"^"}},
+	Concat:   {String: "||", Alias: "concat", Position: 106, Synonyms: []string{"||"}},
+}
+
 // reverse index for ParseFrom; built once at init
 var parseIndex map[string]Type
 
 func init() {
 	parseIndex = make(map[string]Type, len(registry)*3)
 	for t, m := range registry {
+		addParseToken(t, m.String)
+		if m.Alias != "" {
+			addParseToken(t, m.Alias)
+		}
+		for _, s := range m.Synonyms {
+			addParseToken(t, s)
+		}
+	}
+
+	// Add arithmetic operators into global registry and parser index.
+	for t, m := range arithmeticRegistry {
+		registry[t] = m
 		addParseToken(t, m.String)
 		if m.Alias != "" {
 			addParseToken(t, m.Alias)

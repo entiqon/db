@@ -177,3 +177,15 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("expected String(ParseFrom(\"<>\")) to be \"!=\"")
 	}
 }
+
+func TestOperator_ParseArithmetic(t *testing.T) {
+	tests := []string{"+", "-", "*", "/", "%", "^"}
+	for _, s := range tests {
+		t.Run(s, func(t *testing.T) {
+			op := operator.ParseFrom(s)
+			if !op.IsValid() {
+				t.Fatalf("expected valid operator for %q", s)
+			}
+		})
+	}
+}
